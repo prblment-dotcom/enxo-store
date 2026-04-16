@@ -17,7 +17,7 @@ export default function CartDrawer() {
       />
 
       {/* Drawer */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#111111] z-50 flex flex-col shadow-2xl border-l border-[#222222]">
+      <div className="fixed top-0 right-0 h-full w-full sm:max-w-md bg-[#111111] z-50 flex flex-col shadow-2xl border-l border-[#222222]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-[#222222]">
           <h2 className="text-white font-bold uppercase tracking-widest text-sm">
