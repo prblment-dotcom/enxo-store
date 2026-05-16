@@ -2,5 +2,4 @@
 // Everything else (name, price, images, description) is fetched live from Shopify
 export const productRoutes: { id: string; shopifyId: string }[] = [
   { id: '1', shopifyId: '8580801691840' },
-  { id: '2', shopifyId: '8580801691840' }, // replace with balaclava Shopify ID when ready
 ];

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { ShopifyProduct } from '@/lib/shopify';
+import { formatPrice } from '@/lib/currency';
 
 export default function ProductCard({
   routeId,
@@ -19,7 +20,7 @@ export default function ProductCard({
   const frontImage = images[0];
   const backImage = images[1];
   const currentImage = hovered && backImage ? backImage : frontImage;
-  const price = parseFloat(product.priceRange.minVariantPrice.amount).toFixed(2).replace('.00', '');
+  const price = formatPrice(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode);
 
   if (!frontImage) return null;
 
@@ -43,7 +44,7 @@ export default function ProductCard({
 
       <div className="pt-4 text-center flex flex-col gap-1">
         <h3 className="text-white text-xs font-bold uppercase tracking-widest">{product.title}</h3>
-        <span className="text-white text-xs font-bold">${price}</span>
+        <span className="text-white text-xs font-bold">{price}</span>
       </div>
     </div>
   );

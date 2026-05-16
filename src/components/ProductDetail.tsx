@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import type { ShopifyProduct } from '@/lib/shopify';
+import { formatPrice } from '@/lib/currency';
 import ShopifyBuyButton from './ShopifyBuyButton';
 
 export default function ProductDetail({
@@ -14,7 +15,7 @@ export default function ProductDetail({
 }) {
   const images = product.images.edges.map((e) => e.node);
   const [activeIndex, setActiveIndex] = useState(0);
-  const price = parseFloat(product.priceRange.minVariantPrice.amount).toFixed(2).replace('.00', '');
+  const price = formatPrice(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode);
   const descriptionLines = product.description
     ? product.description.split('\n').filter(Boolean)
     : [];
@@ -58,7 +59,7 @@ export default function ProductDetail({
           <h1 className="text-xl sm:text-2xl font-black uppercase tracking-widest leading-tight">
             {product.title}
           </h1>
-          <p className="text-white text-lg sm:text-xl font-bold mt-2">${price}</p>
+          <p className="text-white text-lg sm:text-xl font-bold mt-2">{price}</p>
         </div>
 
         {/* Shopify Buy Button (handles size/variant selection + checkout) */}
