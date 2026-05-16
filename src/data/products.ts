@@ -8,6 +8,7 @@ export interface Product {
   badge?: string;
   sizes?: string[];
   description?: string[];
+  shopifyId?: string;
 }
 
 export const products: Product[] = [
@@ -25,6 +26,7 @@ export const products: Product[] = [
       'Forest green heavyweight cotton',
       'Boxy oversized fit',
     ],
+    shopifyId: '8580801691840',
   },
   {
     id: '2',
@@ -39,5 +41,6 @@ export const products: Product[] = [
       'Screen printed thorn detail',
       'One size fits all',
     ],
+    shopifyId: '8580801691840',
   },
 ];
