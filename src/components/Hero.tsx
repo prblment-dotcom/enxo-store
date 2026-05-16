@@ -1,10 +1,4 @@
-'use client';
-
-import { useCart } from '@/context/CartContext';
-
 export default function Hero() {
-  const { setIsOpen } = useCart();
-
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a] text-white overflow-hidden pt-16">
       {/* Background subtle grid */}
@@ -25,12 +19,6 @@ export default function Hero() {
           >
             Shop Now
           </a>
-          <button
-            onClick={() => setIsOpen(true)}
-            className="px-10 py-4 border border-white text-white text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-colors"
-          >
-            View Cart
-          </button>
         </div>
       </div>
 
