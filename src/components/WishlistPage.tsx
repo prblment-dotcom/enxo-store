@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function WishlistPage() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [soundOn, setSoundOn] = useState(false);
+  const desktopVidRef = useRef<HTMLVideoElement | null>(null);
+  const mobileVidRef = useRef<HTMLVideoElement | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,21 +37,23 @@ export default function WishlistPage() {
 
       {/* Desktop Video */}
       <video
+        ref={desktopVidRef}
         className="absolute inset-0 w-full h-full object-cover hidden sm:block"
         src="/images/MERCH MOVIE.mp4"
         autoPlay
         loop
-        muted
+        muted={!soundOn}
         playsInline
       />
 
       {/* Mobile Video */}
       <video
+        ref={mobileVidRef}
         className="absolute inset-0 w-full h-full object-cover block sm:hidden"
         src="/images/MERCH MOVIE PHONE V.mp4"
         autoPlay
         loop
-        muted
+        muted={!soundOn}
         playsInline
       />
 
@@ -104,6 +109,35 @@ export default function WishlistPage() {
         </a>
       </div>
 
+      {/* Unmute toggle */}
+      <div className="absolute bottom-6 right-6 z-20">
+        <button
+          onClick={async () => {
+            const newVal = !soundOn;
+            setSoundOn(newVal);
+
+            // Update actual video element muted state and attempt to play when unmuting
+            try {
+              if (desktopVidRef.current) desktopVidRef.current.muted = !newVal;
+              if (mobileVidRef.current) mobileVidRef.current.muted = !newVal;
+
+              if (newVal) {
+                // Some browsers require a user gesture to start audio; since this is user-initiated, play() should succeed
+                await desktopVidRef.current?.play();
+                await mobileVidRef.current?.play();
+              }
+            } catch (e) {
+              // ignore play errors
+            }
+          }}
+          title={soundOn ? 'Mute background video' : 'Unmute background video'}
+          className="bg-white/10 text-white backdrop-blur-sm px-3 py-2 rounded-full text-xs font-bold"
+        >
+          {soundOn ? '🔊' : '🔈'}
+        </button>
+      </div>
+
     </div>
   );
 }
+
