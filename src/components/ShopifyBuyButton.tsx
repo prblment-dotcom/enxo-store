@@ -33,7 +33,7 @@ export default function ShopifyBuyButton({ shopifyProductId }: ShopifyBuyButtonP
         ui.createComponent('product', {
           id: shopifyProductId,
           node: containerRef.current,
-          moneyFormat: '%24%7B%7Bamount%7D%7D',
+          moneyFormat: 'Lek%20%7B%7Bamount%7D%7D',
           options: {
             product: {
               styles: {
