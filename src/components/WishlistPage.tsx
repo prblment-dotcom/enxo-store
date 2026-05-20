@@ -8,6 +8,7 @@ export default function WishlistPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [soundOn, setSoundOn] = useState(true);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
@@ -34,12 +35,16 @@ export default function WishlistPage() {
         if (!v) return;
         v.muted = false;
         await v.play();
+        // autoplay with audio succeeded
+        setAutoplayBlocked(false);
       } catch (e) {
-        // If autoplay is blocked, keep it muted to allow autoplay and let user toggle sound.
+        // If autoplay is blocked, keep it muted and update state so UI reflects that
         try {
           const v2 = videoRef.current;
           if (v2) v2.muted = true;
         } catch {}
+        setSoundOn(false);
+        setAutoplayBlocked(true);
       }
     })();
   }, [soundOn, isDesktop]);
@@ -137,22 +142,33 @@ export default function WishlistPage() {
 
       {/* Unmute toggle */}
       <div className="absolute bottom-6 right-6 z-20">
+        {autoplayBlocked && (
+          <div className="mb-2 text-xs text-white/90 text-right">Tap the speaker to enable audio</div>
+        )}
         <button
-          onClick={() => {
-              const newVal = !soundOn;
-              setSoundOn(newVal);
-
-              // Determine which video is visible. Tailwind `sm` breakpoint is 640px.
-              const isDesktop = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 640px)').matches;
-
-              try {
-                if (videoRef.current) {
-                  videoRef.current.muted = !newVal;
+          onClick={async () => {
+                const newVal = !soundOn;
+                // If enabling sound, attempt to unmute and play; if it fails, keep muted and mark blocked
+                if (newVal) {
+                  try {
+                    const v = videoRef.current;
+                    if (!v) return;
+                    v.muted = false;
+                    await v.play();
+                    setSoundOn(true);
+                    setAutoplayBlocked(false);
+                  } catch (e) {
+                    // autoplay blocked — keep muted
+                    try { if (videoRef.current) videoRef.current.muted = true; } catch {}
+                    setSoundOn(false);
+                    setAutoplayBlocked(true);
+                  }
+                } else {
+                  // disabling sound — just mute
+                  try { if (videoRef.current) videoRef.current.muted = true; } catch {}
+                  setSoundOn(false);
                 }
-              } catch (e) {
-                // ignore DOM errors
-              }
-            }}
+              }}
           title={soundOn ? 'Mute background video' : 'Unmute background video'}
           className="bg-white/10 text-white backdrop-blur-sm px-3 py-2 rounded-full text-xs font-bold"
         >
