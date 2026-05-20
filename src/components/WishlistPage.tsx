@@ -176,6 +176,33 @@ export default function WishlistPage() {
         </button>
       </div>
 
+      {/* Fullscreen overlay that prompts user to enable audio when autoplay is blocked */}
+      {autoplayBlocked && (
+        <div
+          role="button"
+          aria-label="Enable audio"
+          onClick={async () => {
+            try {
+              const v = videoRef.current;
+              if (!v) return;
+              v.muted = false;
+              await v.play();
+              setSoundOn(true);
+              setAutoplayBlocked(false);
+            } catch (e) {
+              // keep blocked
+            }
+          }}
+          className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 text-white text-center p-6"
+        >
+          <div className="max-w-md">
+            <p className="font-black text-xl mb-4">Enable audio</p>
+            <p className="text-sm mb-6">Tap anywhere to enable sound for this site.</p>
+            <div className="inline-block bg-white text-black px-4 py-2 rounded-full font-bold">Tap to enable</div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
