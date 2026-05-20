@@ -7,7 +7,7 @@ export default function WishlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [soundOn, setSoundOn] = useState(false);
+  const [soundOn, setSoundOn] = useState(true);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
@@ -23,6 +23,26 @@ export default function WishlistPage() {
     mq.addEventListener('change', handle);
     return () => mq.removeEventListener('change', handle);
   }, []);
+
+  // Try to start playback with sound enabled on mount. Browsers may block this; fail silently.
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (!soundOn) return;
+    (async () => {
+      try {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = false;
+        await v.play();
+      } catch (e) {
+        // If autoplay is blocked, keep it muted to allow autoplay and let user toggle sound.
+        try {
+          const v2 = videoRef.current;
+          if (v2) v2.muted = true;
+        } catch {}
+      }
+    })();
+  }, [soundOn, isDesktop]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
