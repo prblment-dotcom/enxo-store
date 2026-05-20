@@ -32,10 +32,20 @@ export default function WishlistPage() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* Fullscreen Video */}
+      {/* Desktop Video */}
       <video
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover hidden sm:block"
         src="/images/MERCH MOVIE.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+      />
+
+      {/* Mobile Video */}
+      <video
+        className="absolute inset-0 w-full h-full object-cover block sm:hidden"
+        src="/images/MERCH MOVIE PHONE V.mp4"
         autoPlay
         loop
         muted
