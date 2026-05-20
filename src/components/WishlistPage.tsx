@@ -55,11 +55,13 @@ export default function WishlistPage() {
           className="absolute inset-0 w-full h-full object-cover"
           src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/MERCH MOVIE PHONE V.mp4"}
           autoPlay
-          loop
-          muted={!soundOn}
           playsInline
+          muted={!soundOn}
         />
       )}
+
+      {/* Smooth loop handler: seek slightly before the end to avoid a gap */}
+      {isDesktop !== null && <LoopHandler videoRef={videoRef} />}
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
@@ -140,5 +142,43 @@ export default function WishlistPage() {
 
     </div>
   );
+}
+
+// Small helper component that attaches a timeupdate listener to seek when the video is near its end
+function LoopHandler({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement | null> }) {
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+
+    let rafId: number | null = null;
+
+    const onTimeUpdate = () => {
+      // When within 0.06s of the end, jump back to 0 to avoid any gap.
+      const threshold = 0.06; // seconds
+      if (v.duration && v.duration - v.currentTime <= threshold) {
+        // Use requestAnimationFrame to avoid interfering with the playback pipeline.
+        if (rafId == null) rafId = requestAnimationFrame(() => {
+          try {
+            v.currentTime = 0;
+          } catch (e) {
+            // ignore seek errors
+          }
+          if (rafId != null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+        });
+      }
+    };
+
+    v.addEventListener('timeupdate', onTimeUpdate);
+
+    return () => {
+      v.removeEventListener('timeupdate', onTimeUpdate);
+      if (rafId != null) cancelAnimationFrame(rafId);
+    };
+  }, [videoRef]);
+
+  return null;
 }
 
