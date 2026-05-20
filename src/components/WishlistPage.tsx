@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function WishlistPage() {
   const [email, setEmail] = useState('');
@@ -8,8 +8,21 @@ export default function WishlistPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [soundOn, setSoundOn] = useState(false);
-  const desktopVidRef = useRef<HTMLVideoElement | null>(null);
-  const mobileVidRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      setIsDesktop(true);
+      return;
+    }
+
+    const mq = window.matchMedia('(min-width: 640px)');
+    const handle = () => setIsDesktop(!!mq.matches);
+    handle();
+    mq.addEventListener('change', handle);
+    return () => mq.removeEventListener('change', handle);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,27 +48,18 @@ export default function WishlistPage() {
   return (
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
-      {/* Desktop Video */}
-      <video
-        ref={desktopVidRef}
-        className="absolute inset-0 w-full h-full object-cover hidden sm:block"
-        src="/images/MERCH MOVIE.mp4"
-        autoPlay
-        loop
-        muted={!soundOn}
-        playsInline
-      />
-
-      {/* Mobile Video */}
-      <video
-        ref={mobileVidRef}
-        className="absolute inset-0 w-full h-full object-cover block sm:hidden"
-        src="/images/MERCH MOVIE PHONE V.mp4"
-        autoPlay
-        loop
-        muted={!soundOn}
-        playsInline
-      />
+      {/* Single runtime-chosen video to avoid duplicate audio */}
+      {isDesktop === null ? null : (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/MERCH MOVIE PHONE V.mp4"}
+          autoPlay
+          loop
+          muted={!soundOn}
+          playsInline
+        />
+      )}
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
@@ -120,14 +124,8 @@ export default function WishlistPage() {
               const isDesktop = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 640px)').matches;
 
               try {
-                if (isDesktop) {
-                  if (desktopVidRef.current) desktopVidRef.current.muted = !newVal;
-                  // Ensure mobile remains muted
-                  if (mobileVidRef.current) mobileVidRef.current.muted = true;
-                } else {
-                  if (mobileVidRef.current) mobileVidRef.current.muted = !newVal;
-                  // Ensure desktop remains muted
-                  if (desktopVidRef.current) desktopVidRef.current.muted = true;
+                if (videoRef.current) {
+                  videoRef.current.muted = !newVal;
                 }
               } catch (e) {
                 // ignore DOM errors
