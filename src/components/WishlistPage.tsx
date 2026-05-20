@@ -112,24 +112,27 @@ export default function WishlistPage() {
       {/* Unmute toggle */}
       <div className="absolute bottom-6 right-6 z-20">
         <button
-          onClick={async () => {
-            const newVal = !soundOn;
-            setSoundOn(newVal);
+          onClick={() => {
+              const newVal = !soundOn;
+              setSoundOn(newVal);
 
-            // Update actual video element muted state and attempt to play when unmuting
-            try {
-              if (desktopVidRef.current) desktopVidRef.current.muted = !newVal;
-              if (mobileVidRef.current) mobileVidRef.current.muted = !newVal;
+              // Determine which video is visible. Tailwind `sm` breakpoint is 640px.
+              const isDesktop = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 640px)').matches;
 
-              if (newVal) {
-                // Some browsers require a user gesture to start audio; since this is user-initiated, play() should succeed
-                await desktopVidRef.current?.play();
-                await mobileVidRef.current?.play();
+              try {
+                if (isDesktop) {
+                  if (desktopVidRef.current) desktopVidRef.current.muted = !newVal;
+                  // Ensure mobile remains muted
+                  if (mobileVidRef.current) mobileVidRef.current.muted = true;
+                } else {
+                  if (mobileVidRef.current) mobileVidRef.current.muted = !newVal;
+                  // Ensure desktop remains muted
+                  if (desktopVidRef.current) desktopVidRef.current.muted = true;
+                }
+              } catch (e) {
+                // ignore DOM errors
               }
-            } catch (e) {
-              // ignore play errors
-            }
-          }}
+            }}
           title={soundOn ? 'Mute background video' : 'Unmute background video'}
           className="bg-white/10 text-white backdrop-blur-sm px-3 py-2 rounded-full text-xs font-bold"
         >
