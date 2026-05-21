@@ -7,41 +7,7 @@ export default function WishlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [soundOn, setSoundOn] = useState(true);
-  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
-  // Persisted user preference to attempt sound on subsequent visits
-  useEffect(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('videoSoundEnabled') : null;
-    if (saved === '1') {
-      setSoundOn(true);
-    }
-  }, []);
-
-  // One-time global gesture to enable audio (covers users that interact before pressing the toggle)
-  useEffect(() => {
-    const handler = async () => {
-      try {
-        const v = videoRef.current;
-        if (!v) return;
-        v.muted = false;
-        await v.play();
-        setSoundOn(true);
-        setAutoplayBlocked(false);
-        try { localStorage.setItem('videoSoundEnabled', '1'); } catch {}
-      } catch {}
-      // remove listeners after first attempt
-      removeListeners();
-    };
-
-    const removeListeners = () => {
-      window.removeEventListener('pointerdown', handler);
-      window.removeEventListener('keydown', handler);
-    };
-
-    window.addEventListener('pointerdown', handler, { once: true });
-    window.addEventListener('keydown', handler, { once: true });
-    return removeListeners;
-  }, []);
+  // Note: video will attempt to autoplay unmuted; browsers may block unmuted autoplay per policy.
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
@@ -58,29 +24,7 @@ export default function WishlistPage() {
     return () => mq.removeEventListener('change', handle);
   }, []);
 
-  // Try to start playback with sound enabled on mount. Browsers may block this; fail silently.
-  useEffect(() => {
-    if (!videoRef.current) return;
-    if (!soundOn) return;
-    (async () => {
-      try {
-        const v = videoRef.current;
-        if (!v) return;
-        v.muted = false;
-        await v.play();
-        // autoplay with audio succeeded
-        setAutoplayBlocked(false);
-      } catch (e) {
-        // If autoplay is blocked, keep it muted and update state so UI reflects that
-        try {
-          const v2 = videoRef.current;
-          if (v2) v2.muted = true;
-        } catch {}
-        setSoundOn(false);
-        setAutoplayBlocked(true);
-      }
-    })();
-  }, [soundOn, isDesktop]);
+  // We won't programmatically mute/unmute here; the video element below is unmuted by default.
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -114,7 +58,7 @@ export default function WishlistPage() {
           src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/MERCH MOVIE PHONE V.mp4"}
           autoPlay
           playsInline
-          muted={!soundOn}
+          muted={false}
         />
       )}
 
@@ -173,68 +117,7 @@ export default function WishlistPage() {
         </a>
       </div>
 
-      {/* Unmute toggle */}
-      <div className="absolute bottom-6 right-6 z-20">
-        {autoplayBlocked && (
-          <div className="mb-2 text-xs text-white/90 text-right">Tap the speaker to enable audio</div>
-        )}
-        <button
-          onClick={async () => {
-                const newVal = !soundOn;
-                // If enabling sound, attempt to unmute and play; if it fails, keep muted and mark blocked
-                if (newVal) {
-                  try {
-                    const v = videoRef.current;
-                    if (!v) return;
-                    v.muted = false;
-                    await v.play();
-                    setSoundOn(true);
-                    setAutoplayBlocked(false);
-                  } catch (e) {
-                    // autoplay blocked — keep muted
-                    try { if (videoRef.current) videoRef.current.muted = true; } catch {}
-                    setSoundOn(false);
-                    setAutoplayBlocked(true);
-                  }
-                } else {
-                  // disabling sound — just mute
-                  try { if (videoRef.current) videoRef.current.muted = true; } catch {}
-                  setSoundOn(false);
-                }
-              }}
-          title={soundOn ? 'Mute background video' : 'Unmute background video'}
-          className="bg-white/10 text-white backdrop-blur-sm px-3 py-2 rounded-full text-xs font-bold"
-        >
-          {soundOn ? '🔊' : '🔈'}
-        </button>
-      </div>
-
-      {/* Fullscreen overlay that prompts user to enable audio when autoplay is blocked */}
-      {autoplayBlocked && (
-        <div
-          role="button"
-          aria-label="Enable audio"
-          onClick={async () => {
-            try {
-              const v = videoRef.current;
-              if (!v) return;
-              v.muted = false;
-              await v.play();
-              setSoundOn(true);
-              setAutoplayBlocked(false);
-            } catch (e) {
-              // keep blocked
-            }
-          }}
-          className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 text-white text-center p-6"
-        >
-          <div className="max-w-md">
-            <p className="font-black text-xl mb-4">Enable audio</p>
-            <p className="text-sm mb-6">Tap anywhere to enable sound for this site.</p>
-            <div className="inline-block bg-white text-black px-4 py-2 rounded-full font-bold">Tap to enable</div>
-          </div>
-        </div>
-      )}
+      {/* No mute/unmute UI — video is intended to play unmuted by default (note: browsers may block this) */}
 
     </div>
   );
