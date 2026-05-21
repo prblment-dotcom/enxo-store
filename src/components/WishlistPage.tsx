@@ -87,7 +87,7 @@ export default function WishlistPage() {
         <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
-          src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/MERCH MOVIE PHONE V.mp4"}
+          src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/download.mp4"}
           autoPlay
           playsInline
           muted
