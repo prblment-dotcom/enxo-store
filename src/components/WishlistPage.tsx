@@ -140,13 +140,7 @@ export default function WishlistPage() {
           </div>
         )}
 
-        {/* Shop link */}
-        <a
-          href="/products/1"
-          className="mt-6 text-gray-400 text-[10px] uppercase tracking-[0.3em] hover:text-white transition-colors border-b border-gray-600 hover:border-white pb-0.5"
-        >
-          Shop Now
-        </a>
+        {/* Shop link removed temporarily to focus on gathering emails */}
       </div>
 
       {/* No mute/unmute UI — video is intended to play unmuted by default (note: browsers may block this) */}
