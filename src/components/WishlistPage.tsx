@@ -9,6 +9,39 @@ export default function WishlistPage() {
   const [error, setError] = useState('');
   const [soundOn, setSoundOn] = useState(true);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  // Persisted user preference to attempt sound on subsequent visits
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('videoSoundEnabled') : null;
+    if (saved === '1') {
+      setSoundOn(true);
+    }
+  }, []);
+
+  // One-time global gesture to enable audio (covers users that interact before pressing the toggle)
+  useEffect(() => {
+    const handler = async () => {
+      try {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = false;
+        await v.play();
+        setSoundOn(true);
+        setAutoplayBlocked(false);
+        try { localStorage.setItem('videoSoundEnabled', '1'); } catch {}
+      } catch {}
+      // remove listeners after first attempt
+      removeListeners();
+    };
+
+    const removeListeners = () => {
+      window.removeEventListener('pointerdown', handler);
+      window.removeEventListener('keydown', handler);
+    };
+
+    window.addEventListener('pointerdown', handler, { once: true });
+    window.addEventListener('keydown', handler, { once: true });
+    return removeListeners;
+  }, []);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
