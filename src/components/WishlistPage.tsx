@@ -91,6 +91,7 @@ export default function WishlistPage() {
           autoPlay
           playsInline
           muted
+          loop
         />
       )}
 
