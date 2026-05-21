@@ -17,6 +17,9 @@ export default function WishlistPage() {
     if (!v) return;
     try {
       v.muted = true;
+      // set inline attributes for iOS webview handling
+      try { v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); } catch {}
+      try { v.setAttribute('preload', 'auto'); } catch {}
       v.play().catch(() => {});
     } catch {}
   }, [isDesktop]);
