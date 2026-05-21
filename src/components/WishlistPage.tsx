@@ -9,18 +9,42 @@ export default function WishlistPage() {
   const [error, setError] = useState('');
   // Use muted autoplay to ensure the video always starts. We'll unmute on first user gesture.
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
-  // Ensure the video autoplays muted so users always see the motion background
+  // Ensure the video autoplays muted so users always see the motion background.
+  // Also try to restore a previously-granted audio preference (if the user
+  // previously allowed sound we attempt to unmute+play on load). Note: some
+  // browsers (mobile Safari in particular) still require a user gesture for
+  // audible playback — this only helps on browsers/origins that remember prior
+  // engagement.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     try {
+      // start muted to keep autoplay reliable
       v.muted = true;
       // set inline attributes for iOS webview handling
       try { v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', ''); } catch {}
       try { v.setAttribute('preload', 'auto'); } catch {}
+      // attempt a muted play so the visual starts immediately
       v.play().catch(() => {});
+
+      // If the user previously enabled sound, try to restore it now.
+      try {
+        const pref = localStorage.getItem('videoSoundEnabled');
+        if (pref === '1') {
+          // some browsers will allow re-playing with sound if the origin
+          // previously had a user gesture that played media.
+          v.muted = false;
+          v.play().then(() => setSoundEnabled(true)).catch(() => {
+            // If unmuted play is still blocked, fall back to muted playback.
+            try { v.muted = true; } catch {}
+          });
+        }
+      } catch (e) {
+        // ignore localStorage errors
+      }
     } catch {}
   }, [isDesktop]);
 
@@ -45,6 +69,21 @@ export default function WishlistPage() {
       window.removeEventListener('keydown', handler);
     };
   }, []);
+
+  // Helper to unmute from an explicit button press (UI affordance).
+  async function enableSound() {
+    const v = videoRef.current;
+    if (!v) return;
+    try {
+      v.muted = false;
+      await v.play();
+      try { localStorage.setItem('videoSoundEnabled', '1'); } catch {}
+      setSoundEnabled(true);
+    } catch (e) {
+      // if still blocked, keep muted and don't set pref
+      try { v.muted = true; } catch {}
+    }
+  }
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
@@ -113,6 +152,19 @@ export default function WishlistPage() {
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
+
+      {/* Unobtrusive enable-sound button (shown when sound not enabled) */}
+      {!soundEnabled && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={enableSound}
+            className="bg-white/10 backdrop-blur-sm text-white text-xs font-bold uppercase px-3 py-2 rounded tracking-widest hover:bg-white/20 active:bg-white/30 transition-colors"
+            aria-label="Enable sound"
+          >
+            Enable sound
+          </button>
+        </div>
+      )}
 
       {/* Logo top center */}
       <div className="absolute top-6 w-full flex justify-center z-10">
