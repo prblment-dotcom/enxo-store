@@ -11,6 +11,7 @@ export default function WishlistPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  const [showExportUi, setShowExportUi] = useState(false);
 
   // Ensure the video autoplays muted so users always see the motion background.
   // Also try to restore a previously-granted audio preference (if the user
@@ -96,6 +97,16 @@ export default function WishlistPage() {
     handle();
     mq.addEventListener('change', handle);
     return () => mq.removeEventListener('change', handle);
+  }, []);
+
+  // Show export UI when ?export_emails=1 is present (manual admin trigger)
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('export_emails') === '1') setShowExportUi(true);
+      }
+    } catch (e) {}
   }, []);
 
   // We won't programmatically mute/unmute here; the video element below is unmuted by default.
@@ -211,6 +222,47 @@ export default function WishlistPage() {
 
       {/* No mute/unmute UI — video is intended to play unmuted by default (note: browsers may block this) */}
 
+      {/* Export UI injected when ?export_emails=1 */}
+      {showExportUi && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40">
+          <ExportEmailsButton />
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+
+function ExportEmailsButton() {
+  const downloadCsv = () => {
+    try {
+      const raw = localStorage.getItem('wishlist_emails') || '[]';
+      const arr = JSON.parse(raw);
+      // create CSV
+      const csv = (arr.length ? ["email"] : []).concat(arr.map((e: string) => e)).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'wishlist_emails.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      try { navigator.clipboard.writeText(localStorage.getItem('wishlist_emails') || '[]'); } catch {}
+    }
+  };
+
+  return (
+    <div className="flex gap-2 items-center">
+      <button
+        onClick={downloadCsv}
+        className="bg-white text-black px-4 py-2 rounded font-bold text-sm"
+      >
+        Export emails (CSV)
+      </button>
     </div>
   );
 }
