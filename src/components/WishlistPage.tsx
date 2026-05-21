@@ -90,7 +90,7 @@ export default function WishlistPage() {
           src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/MERCH MOVIE PHONE V.mp4"}
           autoPlay
           playsInline
-          muted={false}
+          muted
         />
       )}
 
