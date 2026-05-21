@@ -90,6 +90,10 @@ export default function WishlistPage() {
           src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/download.mp4"}
           autoPlay
           playsInline
+          // iOS Safari requires webkit-playsinline to allow inline autoplay
+          webkit-playsinline="true"
+          // ensure the browser preloads the video for faster start on mobile
+          preload="auto"
           muted
           loop
         />
