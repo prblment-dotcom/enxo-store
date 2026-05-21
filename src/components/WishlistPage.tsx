@@ -99,6 +99,12 @@ export default function WishlistPage() {
           preload="auto"
           muted
           loop
+          onCanPlay={() => {
+            try { videoRef.current?.play().catch(() => {}); } catch {}
+          }}
+          onError={(e) => {
+            try { console.error('Background video error', e); } catch {}
+          }}
         />
       )}
 
