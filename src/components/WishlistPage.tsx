@@ -7,9 +7,41 @@ export default function WishlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Note: video will attempt to autoplay unmuted; browsers may block unmuted autoplay per policy.
+  // Use muted autoplay to ensure the video always starts. We'll unmute on first user gesture.
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  // Ensure the video autoplays muted so users always see the motion background
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    try {
+      v.muted = true;
+      v.play().catch(() => {});
+    } catch {}
+  }, [isDesktop]);
+
+  // One-time global gesture to unmute and play with audio; persist preference
+  useEffect(() => {
+    const handler = async () => {
+      try {
+        const v = videoRef.current;
+        if (!v) return;
+        v.muted = false;
+        await v.play();
+        try { localStorage.setItem('videoSoundEnabled', '1'); } catch {}
+      } catch {}
+      window.removeEventListener('pointerdown', handler);
+      window.removeEventListener('keydown', handler);
+    };
+
+    window.addEventListener('pointerdown', handler, { once: true });
+    window.addEventListener('keydown', handler, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handler);
+      window.removeEventListener('keydown', handler);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
