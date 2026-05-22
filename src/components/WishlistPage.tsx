@@ -12,6 +12,7 @@ export default function WishlistPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [showExportUi, setShowExportUi] = useState(false);
+  const [showDebugUi, setShowDebugUi] = useState(false);
 
   // Ensure the video autoplays muted so users always see the motion background.
   // Also try to restore a previously-granted audio preference (if the user
@@ -105,6 +106,7 @@ export default function WishlistPage() {
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         if (params.get('export_emails') === '1') setShowExportUi(true);
+        if (params.get('video_debug') === '1') setShowDebugUi(true);
       }
     } catch (e) {}
   }, []);
@@ -229,6 +231,12 @@ export default function WishlistPage() {
         </div>
       )}
 
+      {showDebugUi && (
+        <div className="fixed top-6 left-4 z-40">
+          <VideoDebugOverlay videoRef={videoRef} />
+        </div>
+      )}
+
     </div>
   );
 }
@@ -263,6 +271,61 @@ function ExportEmailsButton() {
       >
         Export emails (CSV)
       </button>
+    </div>
+  );
+}
+
+
+function VideoDebugOverlay({ videoRef }: { videoRef: React.RefObject<HTMLVideoElement | null> }) {
+  const [state, setState] = useState({ muted: true, paused: true, currentTime: 0, duration: 0, readyState: 0 });
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const refresh = () => setState({ muted: !!v.muted, paused: v.paused, currentTime: v.currentTime || 0, duration: v.duration || 0, readyState: v.readyState });
+    const interval = setInterval(refresh, 500);
+    v.addEventListener('play', refresh);
+    v.addEventListener('pause', refresh);
+    v.addEventListener('volumechange', refresh);
+    v.addEventListener('timeupdate', refresh);
+    refresh();
+    return () => {
+      clearInterval(interval);
+      try { v.removeEventListener('play', refresh); v.removeEventListener('pause', refresh); v.removeEventListener('volumechange', refresh); v.removeEventListener('timeupdate', refresh); } catch {}
+    };
+  }, [videoRef]);
+
+  const attemptPlay = async () => {
+    const v = videoRef.current;
+    if (!v) return;
+    try {
+      v.muted = false;
+      await v.play();
+      console.log('play succeeded');
+    } catch (e) {
+      console.error('play failed', e);
+      try { v.muted = true; } catch {}
+    }
+  };
+
+  const logState = () => {
+    const v = videoRef.current;
+    console.log('video element state', v, { muted: v?.muted, paused: v?.paused, currentTime: v?.currentTime, duration: v?.duration, readyState: v?.readyState });
+  };
+
+  return (
+    <div className="bg-white/90 text-black p-3 rounded shadow max-w-xs">
+      <div className="text-xs font-bold mb-2">Video debug</div>
+      <div className="text-[11px] mb-2">
+        muted: {String(state.muted)}<br />
+        paused: {String(state.paused)}<br />
+        time: {Math.round(state.currentTime * 100) / 100} / {isFinite(state.duration) ? Math.round(state.duration * 100) / 100 : 'N/A'}<br />
+        readyState: {state.readyState}
+      </div>
+      <div className="flex gap-2">
+        <button onClick={attemptPlay} className="px-2 py-1 text-xs bg-black text-white rounded">Attempt play</button>
+        <button onClick={logState} className="px-2 py-1 text-xs bg-gray-200 rounded">Log</button>
+      </div>
     </div>
   );
 }
