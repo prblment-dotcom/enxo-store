@@ -96,8 +96,16 @@ export default function WishlistPage() {
     const mq = window.matchMedia('(min-width: 640px)');
     const handle = () => setIsDesktop(!!mq.matches);
     handle();
-    mq.addEventListener('change', handle);
-    return () => mq.removeEventListener('change', handle);
+    // addEventListener('change') isn't supported in older Safari; provide a fallback
+    if (typeof mq.addEventListener === 'function') {
+      mq.addEventListener('change', handle);
+      return () => mq.removeEventListener('change', handle);
+    }
+    if (typeof (mq as any).addListener === 'function') {
+      (mq as any).addListener(handle);
+      return () => (mq as any).removeListener(handle);
+    }
+    return undefined;
   }, []);
 
   // Show export UI when ?export_emails=1 is present (manual admin trigger)
