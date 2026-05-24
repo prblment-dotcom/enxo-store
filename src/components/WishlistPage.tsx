@@ -10,7 +10,9 @@ export default function WishlistPage() {
   // Use muted autoplay to ensure the video always starts. We'll unmute on first user gesture.
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  // Default to true so the video element renders immediately on first paint.
+  // The matchMedia effect below will update it to false on mobile.
+  const [isDesktop, setIsDesktop] = useState<boolean>(true);
   const [showExportUi, setShowExportUi] = useState(false);
   const [showDebugUi, setShowDebugUi] = useState(false);
 
@@ -130,14 +132,24 @@ export default function WishlistPage() {
     setLoading(true);
     setError('');
 
-    // Store in localStorage as a simple wishlist (can be wired to a backend later)
-    const existing = JSON.parse(localStorage.getItem('wishlist_emails') || '[]');
-    if (!existing.includes(email)) {
-      existing.push(email);
-      localStorage.setItem('wishlist_emails', JSON.stringify(existing));
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Something went wrong. Try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError('Network error. Please try again.');
+      setLoading(false);
+      return;
     }
 
-    await new Promise((r) => setTimeout(r, 600)); // small delay for feel
     setSubmitted(true);
     setLoading(false);
   }
@@ -146,11 +158,10 @@ export default function WishlistPage() {
     <div className="relative w-full h-screen overflow-hidden bg-black">
 
       {/* Single runtime-chosen video to avoid duplicate audio */}
-      {isDesktop === null ? null : (
-        <video
+      <video
           ref={videoRef}
           className="absolute inset-0 w-full h-full object-cover"
-          src={isDesktop ? "/images/MERCH MOVIE.mp4" : "/images/download.mp4"}
+          src={isDesktop ? "/images/MERCH MOVIE FINAL.mp4" : "/images/download.mp4"}
           autoPlay
           playsInline
           // iOS Safari requires webkit-playsinline to allow inline autoplay
@@ -166,10 +177,9 @@ export default function WishlistPage() {
             try { console.error('Background video error', e); } catch {}
           }}
         />
-      )}
 
       {/* Smooth loop handler: seek slightly before the end to avoid a gap */}
-      {isDesktop !== null && <LoopHandler videoRef={videoRef} />}
+      <LoopHandler videoRef={videoRef} />
 
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
